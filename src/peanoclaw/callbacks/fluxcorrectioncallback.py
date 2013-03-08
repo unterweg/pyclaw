@@ -1,27 +1,21 @@
 '''
-Created on Mar 6, 2013
+Created on Mar 8, 2013
 
 @author: kristof
 '''
 
-from clawpack.peanoclaw.converter import get_number_of_dimensions
-from clawpack.peanoclaw.converter import create_domain
-from clawpack.peanoclaw.converter import create_subgrid_state
-
-class RestrictionCallback(object):
+class FluxCorrectionCallback(object):
     '''
-    Encapsulating the functionality when restricting from a fine to a coarse subgrid.
+    This class encapsulates the callback for interpolating between
+    a coarse and a fine subgrid.
     '''
-
     from ctypes import py_object
     from ctypes import c_int
     from ctypes import c_double
-    from ctypes import c_bool
-    from ctypes import POINTER
     from ctypes import CFUNCTYPE
-
+  
     #Callback definition
-    CALLBACK_RESTRICTION = CFUNCTYPE(None, 
+    CALLBACK_FLUX_CORRECTION = CFUNCTYPE(None, 
                           py_object, #source q
                           py_object, #source qbc
                           py_object, #source aux
@@ -42,31 +36,31 @@ class RestrictionCallback(object):
                           c_int,     #aux fields per cell
                           )
 
-    def __init__(self, restriction, solver):
+
+    def __init__(self, flux_correction, solver):
       '''
       Constructor
       '''
-      self.restriction = restriction
+      self.flux_correction = flux_correction
       self.solver = solver
-      self.callback = None
-
-    def get_restriction_callback(self):
+      
+    def get_flux_correction_callback(self):
       r"""
       Creates a closure for the solver callback method.
       """
-      def callback_restriction(
+      def callback_flux_correction(
                                  source_q, 
                                  source_qbc, 
                                  source_aux, 
                                  source_subdivision_factor_x0, 
                                  source_subdivision_factor_x1, 
                                  source_subdivision_factor_x2, 
-                                 source_size_x0,
-                                 source_size_x1,
-                                 source_size_x2,
-                                 source_position_x0,
-                                 source_position_x1,
-                                 source_position_x2,
+                                 source_size_x0, 
+                                 source_size_x1, 
+                                 source_size_x2, 
+                                 source_position_x0, 
+                                 source_position_x1, 
+                                 source_position_x2, 
                                  source_current_time, 
                                  source_timestep_size,
                                  destination_q, 
@@ -75,12 +69,12 @@ class RestrictionCallback(object):
                                  destination_subdivision_factor_x0, 
                                  destination_subdivision_factor_x1, 
                                  destination_subdivision_factor_x2, 
-                                 destination_size_x0,
-                                 destination_size_x1,
-                                 destination_size_x2,
-                                 destination_position_x0,
-                                 destination_position_x1,
-                                 destination_position_x2,
+                                 destination_size_x0, 
+                                 destination_size_x1, 
+                                 destination_size_x2, 
+                                 destination_position_x0, 
+                                 destination_position_x1, 
+                                 destination_position_x2, 
                                  destination_current_time, 
                                  destination_timestep_size,
                                  unknowns_per_cell,
@@ -89,7 +83,7 @@ class RestrictionCallback(object):
         if(aux_fields_per_cell == 0):
           source_aux = None
           destination_aux = None
-          
+
         number_of_dimensions = get_number_of_dimensions(source_q)
         source_domain = create_domain(number_of_dimensions, 
                                (source_position_x0, source_position_x1, source_position_x2), 
@@ -117,11 +111,10 @@ class RestrictionCallback(object):
                                     unknowns_per_cell, 
                                     aux_fields_per_cell)
           
-        self.restriction(source_subgrid_state, source_qbc, destination_subgrid_state, destination_qbc)
+        self.flux_correction(source_subgrid_state, source_qbc, destination_subgrid_state, destination_qbc)
         
-      if(self.restriction == None):
-        self.callback = None
+      if(self.flux_correction == None):
+        return None
       else:
-        self.callback = self.CALLBACK_RESTRICTION(callback_restriction)
-
-      return self.callback
+        return self.CALLBACK_FLUX_CORRECTION(callback_flux_correction)
+                

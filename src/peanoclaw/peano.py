@@ -11,6 +11,8 @@ from ctypes import c_double
 from ctypes import c_int
 from ctypes import c_void_p
 from ctypes import c_char_p
+from ctypes import byref
+from ctypes import RTLD_GLOBAL
 import signal
 from clawpack.peanoclaw.converter import get_number_of_dimensions
 
@@ -37,11 +39,11 @@ class Peano(object):
     dim = get_number_of_dimensions( solution.q )
     
     logging.getLogger('peanoclaw').info("Loading Peano-library...")
-    self.libpeano = CDLL(self.get_lib_path(dim))
+    self.libpeano = CDLL(self.get_lib_path(dim),mode=RTLD_GLOBAL)
     logging.getLogger('peanoclaw').info("Peano loaded successfully.")
     self.libpeano.pyclaw_peano_new.restype = c_void_p
     self.libpeano.pyclaw_peano_destroy.argtypes = [c_void_p]
-    self.libpeano.pyclaw_peano_evolveToTime.argtypes = [c_double, c_void_p, c_void_p, c_void_p]
+    self.libpeano.pyclaw_peano_evolveToTime.argtypes = [c_double, c_void_p]
     
     self.boundary_condition_callback = boundary_condition_callback
     self.solver_callback = solver_callback
@@ -69,7 +71,8 @@ class Peano(object):
     else:
       domain_position_x2 = dimensions[2].lower
       domain_size_x2 = dimensions[2].upper - dimensions[2].lower
-      
+   
+    self.crank = c_int()
     self.libpeano.pyclaw_peano_new.argtypes = [ c_double, #Initial mesh width
                                                 c_double, #Domain position X0
                                                 c_double, #Domain position X1
@@ -89,9 +92,12 @@ class Peano(object):
                                                 c_void_p, #q Initialization callback
                                                 c_void_p, #Boundary condition callback
                                                 c_void_p, #Solver callback
+                                                c_void_p, #Solution callback
                                                 c_void_p, #Interpolation callback
                                                 c_void_p, #Restriction callback
-                                                c_void_p] #Flux correction callback
+                                                c_void_p, #Flux correction callback
+                                                c_void_p  #rank
+                                                ] 
     self.peano = self.libpeano.pyclaw_peano_new(c_double(initial_minimal_mesh_width),
                                                 c_double(dimensions[0].lower),
                                                 c_double(dimensions[1].lower),
@@ -111,10 +117,17 @@ class Peano(object):
                                                 initialization_callback.get_initialization_callback(),
                                                 boundary_condition_callback.get_boundary_condition_callback(),
                                                 solver_callback.get_solver_callback(),
+                                                solution.get_add_to_solution_callback(),
                                                 interpolation_callback.get_interpolation_callback(),
                                                 restriction_callback.get_restriction_callback(),
-                                                flux_correction_callback.get_flux_correction_callback())
+                                                flux_correction_callback.get_flux_correction_callback(),
+                                                byref(self.crank)
+                                                )
+
+    self.rank = self.crank.value
     
+    print 'peano instance: got rank: ', self.rank
+
     # Set PeanoSolution
     import clawpack.peanoclaw as peanoclaw
     if(isinstance(solution, peanoclaw.Solution)):
@@ -150,15 +163,22 @@ class Peano(object):
   def evolve_to_time(self, tend):
     self.libpeano.pyclaw_peano_evolveToTime(
       tend, 
-      self.peano, 
-      self.boundary_condition_callback.get_boundary_condition_callback(), 
-      self.solver_callback.get_solver_callback(),
-      self.interpolation_callback.get_interpolation_callback(),
-      self.restriction_callback.get_restriction_callback(),
-      self.flux_correction_callback.get_flux_correction_callback())
+      self.peano#, 
+      #self.boundary_condition_callback.get_boundary_condition_callback(), 
+      #self.solver_callback.get_solver_callback(),
+      #self.interpolation_callback.get_interpolation_callback(),
+      #self.restriction_callback.get_restriction_callback(),
+      #self.flux_correction_callback.get_flux_correction_callback()
+    )
 
   def teardown(self):
     self.libpeano.pyclaw_peano_destroy(self.peano)
     
-    
-    
+  def getRank(self):
+      return self.rank
+
+  def runWorker(self):
+    self.libpeano.pyclaw_peano_runWorker.argtypes = [c_void_p]
+    self.libpeano.pyclaw_peano_runWorker(self.peano)
+
+    return 0
