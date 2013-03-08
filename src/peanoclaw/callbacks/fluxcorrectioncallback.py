@@ -43,6 +43,7 @@ class FluxCorrectionCallback(object):
       '''
       self.flux_correction = flux_correction
       self.solver = solver
+      self.callback = None
       
     def get_flux_correction_callback(self):
       r"""
@@ -116,5 +117,8 @@ class FluxCorrectionCallback(object):
       if(self.flux_correction == None):
         return None
       else:
-        return self.CALLBACK_FLUX_CORRECTION(callback_flux_correction)
+        if not self.callback:
+          self.callback = self.CALLBACK_FLUX_CORRECTION(callback_flux_correction)
+        
+        return self.callback
                 
