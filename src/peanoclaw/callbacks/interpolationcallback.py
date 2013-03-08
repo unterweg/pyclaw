@@ -18,8 +18,6 @@ class InterpolationCallback(object):
     from ctypes import py_object
     from ctypes import c_int
     from ctypes import c_double
-    from ctypes import c_bool
-    from ctypes import POINTER
     from ctypes import CFUNCTYPE
   
     #Callback definition

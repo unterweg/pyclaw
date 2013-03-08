@@ -9,6 +9,7 @@ from clawpack.peanoclaw.callbacks.solvercallback import SolverCallback
 from clawpack.peanoclaw.callbacks.boundaryconditioncallback import BoundaryConditionCallback
 from clawpack.peanoclaw.callbacks.interpolationcallback import InterpolationCallback
 from clawpack.peanoclaw.callbacks.restrictioncallback import RestrictionCallback
+from clawpack.peanoclaw.callbacks.fluxcorrectioncallback import FluxCorrectionCallback
 from clawpack.peanoclaw.peano import Peano
 
 class Solver(Solver):
@@ -33,7 +34,8 @@ class Solver(Solver):
                  aux_initialization=None, 
                  refinement_criterion=None,
                  interpolation=None,
-                 restriction=None
+                 restriction=None,
+                 flux_correction=None
                  ):
         r"""
         Initializes the Peano-solver. This keeps the Peano-spacetree internally and wraps the given PyClaw-solver.
@@ -59,6 +61,7 @@ class Solver(Solver):
         self.boundary_condition_callback = BoundaryConditionCallback(self)
         self.interpolation_callback = InterpolationCallback(interpolation, self)
         self.restriction_callback = RestrictionCallback(restriction, self)
+        self.flux_correction_callback = FluxCorrectionCallback(flux_correction, self)
         
     def setup(self, solution):
         r"""
@@ -83,7 +86,8 @@ class Solver(Solver):
                            self.solver_callback,
                            self.boundary_condition_callback,
                            self.interpolation_callback,
-                           self.restriction_callback)
+                           self.restriction_callback,
+                           self.flux_correction_callback)
                 
     def teardown(self):
         r"""

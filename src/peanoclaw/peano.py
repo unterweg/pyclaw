@@ -29,7 +29,8 @@ class Peano(object):
                solver_callback, 
                boundary_condition_callback, 
                interpolation_callback, 
-               restriction_callback):
+               restriction_callback,
+               flux_correction_callback):
     '''
     Constructor
     '''
@@ -46,6 +47,7 @@ class Peano(object):
     self.solver_callback = solver_callback
     self.interpolation_callback = interpolation_callback
     self.restriction_callback = restriction_callback
+    self.flux_correction_callback = flux_correction_callback
     
     # Get parameters for Peano
     dimensions = solution.state.grid.dimensions
@@ -88,7 +90,8 @@ class Peano(object):
                                                 c_void_p, #Boundary condition callback
                                                 c_void_p, #Solver callback
                                                 c_void_p, #Interpolation callback
-                                                c_void_p] #Restriction callback
+                                                c_void_p, #Restriction callback
+                                                c_void_p] #Flux correction callback
     self.peano = self.libpeano.pyclaw_peano_new(c_double(initial_minimal_mesh_width),
                                                 c_double(dimensions[0].lower),
                                                 c_double(dimensions[1].lower),
@@ -109,7 +112,8 @@ class Peano(object):
                                                 boundary_condition_callback.get_boundary_condition_callback(),
                                                 solver_callback.get_solver_callback(),
                                                 interpolation_callback.get_interpolation_callback(),
-                                                restriction_callback.get_restriction_callback())
+                                                restriction_callback.get_restriction_callback(),
+                                                flux_correction_callback.get_flux_correction_callback())
     
     # Set PeanoSolution
     import clawpack.peanoclaw as peanoclaw
@@ -150,7 +154,8 @@ class Peano(object):
       self.boundary_condition_callback.get_boundary_condition_callback(), 
       self.solver_callback.get_solver_callback(),
       self.interpolation_callback.get_interpolation_callback(),
-      self.restriction_callback.get_restriction_callback())
+      self.restriction_callback.get_restriction_callback(),
+      self.flux_correction_callback.get_flux_correction_callback())
 
   def teardown(self):
     self.libpeano.pyclaw_peano_destroy(self.peano)
