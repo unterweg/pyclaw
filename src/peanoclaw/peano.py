@@ -153,8 +153,8 @@ class Peano(object):
     elif platform.system() == 'Darwin':
         shared_library_extension = 'dylib'
     else:
-        raise("Unsupported operating system. Only Linux and MacOS supported currently.")    
-    
+        raise("Unsupported operating system. Only Linux and MacOS supported currently.")
+      
     libraryFileName = os.path.join(os.path.dirname(peanoclaw.__file__), 'libpeano-claw-'+ str(dim)+ 'd.' + shared_library_extension)
     logging.getLogger('peanoclaw').info(libraryFileName)
     return os.path.join(libraryFileName)
@@ -180,5 +180,4 @@ class Peano(object):
   def runWorker(self):
     self.libpeano.pyclaw_peano_runWorker.argtypes = [c_void_p]
     self.libpeano.pyclaw_peano_runWorker(self.peano)
-
-    return 0
+    self.teardown()

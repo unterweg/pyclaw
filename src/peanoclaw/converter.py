@@ -4,8 +4,7 @@ def get_number_of_dimensions( q ):
     since the solution field have one element more which contains the number of unknowns per subcell the dimension 
     computed by substracting one from the size of the solution list.
     """
-    size = len(q)
-    return size - 1
+    return len(q.shape) - 1
 
 if __name__ == '__main__':
     pass
